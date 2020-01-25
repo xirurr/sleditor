@@ -117,27 +117,28 @@ public class Start {
             final String date = config.getDate();
 
             String SQL =
-                    " with mt as \n" +
-                            "                            ( \n" +
-                            "select  TenantId,MAX(LastSync) LastSync,MIN(LAstSync) FirstSync from hub.ExchangeAuditLog with (nolock) \n" +
+                    "with mt as \n" +
+                            "(\n" +
+                            "select  TenantId,LastSync from hub.ExchangeAuditLog with (nolock)\n" +
                             "where Date >=\'" + date + "\' \n" +
-                            "group by TenantId\n" +
-                            "), \n" +
-                            "logInfo as \n" +
-                            "( \n" +
-                            "select * from v_LogDataChange with (nolock) where TableName ='refDistributorsExt' and FieldName = 'usereplicator4000'\n" +
-                            ") \n" +
-                            " \n" +
-                            "select  d.Name as NameOfDistributors, d.NodeID,d.id,li.ChangeDate dateOfChange,\n" +
-                            "li.OldValue useReplicatorOldValue,li.NewValue useReplicatorNewValue ,mt.LastSync LastSession, mt.FirstSync FirstSession\n" +
-                            "from mt \n" +
+                            "),\n" +
+                            "logInfo as\n" +
+                            "(\n" +
+                            "select * from v_LogDataChange with (nolock) where TableName ='refDistributorsExt' and FieldName = 'usereplicator4000' \n" +
+                            ")\n" +
+                            "\n" +
+                            "select  d.Name as NameOfDistributors, d.NodeID,d.id," +
+                            " li.ChangeDate dateOfChange,li.OldValue useReplicatorOldValue," +
+                            " li.NewValue useReplicatorNewValue ,\n" +
+                            "mt.LastSync SessionDate \n" +
+                            "from mt  \n" +
                             "join dbo.refDistributors as d on mt.TenantId = d.NodeID\n" +
-                            "left join logInfo as li on li.idRecord = d.id";
+                            "left join logInfo as li on li.idRecord = d.id\n";
 
             final ResultSet resultSet = statement.executeQuery(SQL);
 
             List<Statistic> tmpListCicerone = new ArrayList<>();
-            int count = 0;
+            int count =0;
             while (resultSet.next()) {
                 final Statistic tmpStatistic = new Statistic(resultSet.getString("NameOfDistributors"),
                         resultSet.getString("NodeID"),
@@ -155,10 +156,10 @@ public class Start {
                 //  checkAndMarkDuplicates(tmpStatistic);
 
             }
-            System.out.println("обработано " + count + " сессий R4000");
+            System.out.println("обработано "+count+ " сессий R4000");
             deleteMarkedElements();
             statisticList.addAll(tmpListCicerone);
-            //  statisticList.forEach(System.out::println);
+          //  statisticList.forEach(System.out::println);
 
             if (statisticList.size() == 0) {
                 System.out.println("R4000 не использовался в этом периоде");
@@ -181,24 +182,33 @@ public class Start {
             final String date = config.getDate();
 
             String SQL =
-                    "with statistc as (\n" +
-                            "select DistributorId, MIN(SessionCreateDate) firstSync, MAX(SessionCreateDate) lastSync\n" +
-                            "from cicerone.Sessions  \n" +
-                            "where SessionCreateDate >=\'" + date + "\' \n" +
-                            "group by DistributorId)\n" +
-                            "select rd.NodeID, rd.Name, firstSync, lastSync from statistc st\n" +
-                            "join refDistributors rd on rd.id = st.DistributorId";
+                    "with sessionsInfo as\n" +
+                            "(\n" +
+                            "select  DistributorId,SessionCreateDate from cicerone.Sessions with (nolock)\n" +
+                            "where sessioncreatedate >=\'" + date + "\' \n" +
+                            "),\n" +
+                            "distrInfo as\n" +
+                            "(\n" +
+                            "select id from Cicerone.distributors with (nolock)\n" +
+                            ")\n" +
+                            "\n" +
+                            "select si.DistributorId DistributorFromSessions, si.SessionCreateDate SessionDate," +
+                            " di.id ConnectedDistributor, rd.NodeID NodeID, rd.name NameOfDistributors \n" +
+                            "from sessionsInfo si \n" +
+                            "left join distrInfo as di on si.DistributorId = di.id \n" +
+                            "left join refDistributors as rD on si.DistributorId = rD.id \n";
 
             final ResultSet resultSet = statement.executeQuery(SQL);
             List<Statistic> tmpListCicerone = new ArrayList<>();
-            int count = 0;
+            int count =0;
 
             while (resultSet.next()) {
                 final Statistic tmpStatistic = new Statistic(
-                        resultSet.getString("Name"),
+                        resultSet.getString("NameOfDistributors"),
                         resultSet.getString("NodeID"),
-                        resultSet.getString("firstSync"),
-                        resultSet.getString("lastSync"),
+                        resultSet.getString("DistributorFromSessions"),
+                        resultSet.getString("SessionDate"),
+                        resultSet.getString("ConnectedDistributor"),
                         Protocol.Cicerone
                 );
 
@@ -206,13 +216,14 @@ public class Start {
             }
 
             combineR4000AndCiceroneData(tmpListCicerone);
-            System.out.println("обработано " + count + " сессий Cicerone");
+            System.out.println("обработано "+count+ " сессий Cicerone");
             deleteMarkedElements();
         } catch (SQLException | LackOfInformationException e) {
-            if (e.getMessage().contains("Invalid object name 'cicerone.Sessions'")) {
+            if (e.getMessage().contains("Invalid object name 'cicerone.Sessions'")){
                 System.out.println("Данные по протоколу Cicerone отсутствуют");
-            } else
-                e.printStackTrace();
+            }
+            else
+            e.printStackTrace();
         } finally {
             sqlConnectionPool.returnConnection(connection);
         }
@@ -229,7 +240,7 @@ public class Start {
                         statistic.setFirstSession(tmpStatistic.getFirstSession());
                         statistic.setLastSession(tmpStatistic.getLastSession());
                     }
-                    tmpStatistic.setDeletedMark(true);
+                        tmpStatistic.setDeletedMark(true);
 
                 }
             }
@@ -295,7 +306,7 @@ public class Start {
     }
 
     private int getSize(ResultSet rs) throws SQLException {
-        if (rs != null) {
+        if (rs !=null){
             rs.last();
             return rs.getRow();
         }

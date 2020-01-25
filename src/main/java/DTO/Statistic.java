@@ -27,9 +27,8 @@ public class Statistic {
     private Protocol protocol;
 
 
-
     public Statistic(String nameOfDistr, String nodeId, String distrId,
-                     String dateOfChange, String firstSession, String lastSession, String useReplicatorOldValue,
+                     String dateOfChange, String sessionDate, String useReplicatorOldValue,
                      String useReplicatorNewValue, Protocol r4000) throws LackOfInformationException {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
@@ -60,11 +59,11 @@ public class Statistic {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        if (!firstSession.isBlank()) {
+        if (!sessionDate.isBlank()) {
             try {
                 sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSSSSSS");
-                this.firstSession = sdf.parse(firstSession);
-                this.lastSession = sdf.parse(lastSession);
+                this.firstSession = sdf.parse(sessionDate);
+                this.lastSession = sdf.parse(sessionDate);
             } catch (ParseException e) {
                 e.printStackTrace();
             }
@@ -107,34 +106,6 @@ public class Statistic {
         }
         status = connectedDistributor.isBlank() ? "Disabled" : "Enabled";
         this.protocol = cicerone;
-    }
-
-    public Statistic(String name, String nodeId, String firstSync, String lastSync, Protocol protocol) throws LackOfInformationException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
-        if (name == null || name.isBlank()) {
-            this.nameOfDistr = "empty";
-        } else {
-            this.nameOfDistr = name;
-        }
-
-        if (nodeId == null || nodeId.isBlank()) {
-            throw new LackOfInformationException("nodeId cannot be empty");
-        } else {
-            this.nodeId = Long.parseLong(nodeId);
-        }
-        try {
-            if (firstSync.isBlank()) {
-                throw new LackOfInformationException("Cicerone session date cannot be empty");
-            } else {
-                this.firstSession = sdf.parse(firstSync);
-                this.lastSession = sdf.parse(lastSync);
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        this.protocol = protocol;
-        status
-
     }
 
 
