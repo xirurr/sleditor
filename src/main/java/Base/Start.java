@@ -14,6 +14,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -186,19 +188,20 @@ public class Start {
                             "from cicerone.Sessions  \n" +
                             "where SessionCreateDate >=\'" + date + "\' \n" +
                             "group by DistributorId)\n" +
-                            "select rd.NodeID, rd.Name, firstSync, lastSync from statistc st\n" +
+                            "select rd.NodeID, rd.id distrId rd.Name, firstSync, lastSync from statistc st\n" +
                             "join refDistributors rd on rd.id = st.DistributorId";
 
             final ResultSet resultSet = statement.executeQuery(SQL);
             List<Statistic> tmpListCicerone = new ArrayList<>();
             int count = 0;
-
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
             while (resultSet.next()) {
                 final Statistic tmpStatistic = new Statistic(
                         resultSet.getString("Name"),
+                        resultSet.getString("distrId"),
                         resultSet.getString("NodeID"),
-                        resultSet.getString("firstSync"),
-                        resultSet.getString("lastSync"),
+                        sdf.parse(resultSet.getString("firstSync")),
+                        sdf.parse(resultSet.getString("lastSync")),
                         Protocol.Cicerone
                 );
 
@@ -208,7 +211,7 @@ public class Start {
             combineR4000AndCiceroneData(tmpListCicerone);
             System.out.println("обработано " + count + " сессий Cicerone");
             deleteMarkedElements();
-        } catch (SQLException | LackOfInformationException e) {
+        } catch (SQLException | LackOfInformationException | ParseException e) {
             if (e.getMessage().contains("Invalid object name 'cicerone.Sessions'")) {
                 System.out.println("Данные по протоколу Cicerone отсутствуют");
             } else

@@ -4,7 +4,6 @@ import Exceptions.LackOfInformationException;
 import SQL.SqlConnectionPool;
 import lombok.Data;
 
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,7 +24,6 @@ public class Statistic {
     private String status;
     private boolean deletedMark = false;
     private Protocol protocol;
-
 
 
     public Statistic(String nameOfDistr, String nodeId, String distrId,
@@ -109,31 +107,28 @@ public class Statistic {
         this.protocol = cicerone;
     }
 
-    public Statistic(String name, String nodeId, String firstSync, String lastSync, Protocol protocol) throws LackOfInformationException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+
+    public Statistic(String name, String distrId, String nodeId, Date firstSync, Date lastSync, Protocol protocol) throws LackOfInformationException {
+
         if (name == null || name.isBlank()) {
             this.nameOfDistr = "empty";
         } else {
             this.nameOfDistr = name;
         }
-
+        if (distrId == null || distrId.isBlank()) {
+            throw new LackOfInformationException("distrId cannot be empty");
+        } else {
+            this.distrId = Long.parseLong(distrId);
+        }
         if (nodeId == null || nodeId.isBlank()) {
             throw new LackOfInformationException("nodeId cannot be empty");
         } else {
             this.nodeId = Long.parseLong(nodeId);
         }
-        try {
-            if (firstSync.isBlank()) {
-                throw new LackOfInformationException("Cicerone session date cannot be empty");
-            } else {
-                this.firstSession = sdf.parse(firstSync);
-                this.lastSession = sdf.parse(lastSync);
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        this.firstSession = firstSync;
+        this.lastSession = lastSync;
         this.protocol = protocol;
-        status
+        status = checkDistrStatus(distrId, protocol);
 
     }
 
@@ -152,7 +147,7 @@ public class Statistic {
             newBoolValue = Integer.parseInt(useReplicatorNewValue) != 0;
         }
         if (oldBoolValue == null || newBoolValue == null) {
-            return getCurrentStatusFromDb();
+            return getR4000CurrentStatusFromDb();
         } else if (oldBoolValue == false && newBoolValue == false) {
             return "Disabled";
         } else if (oldBoolValue == false && newBoolValue == true) {
@@ -165,6 +160,34 @@ public class Statistic {
 
 
     }
+
+
+    private String checkDistrStatus(String distrId, Protocol protocol) {
+        switch (protocol) {
+            case R4000:
+                return getR4000CurrentStatusFromDb();
+            break;
+            case Cicerone:
+                getR4000CurrentStatusFromDb();
+                break;
+            case R4000andCicerore:
+                break;
+        }
+        if (oldBoolValue == null || newBoolValue == null) {
+            return getR4000CurrentStatusFromDb();
+        } else if (newBoolValue == false) {
+            return
+        } else if (newBoolValue == true) {
+            return
+        } else if (newBoolValue == false) {
+            return "Disabled";
+        } else {
+            return "Undefined";
+        }
+
+
+    }
+
 
     public Map<String, String> listElements() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm");
@@ -184,9 +207,10 @@ public class Statistic {
     }
 
 
-    public String getCurrentStatusFromDb() {
+    public String getR4000CurrentStatusFromDb() {
         final SqlConnectionPool sqlConnectionPool = new SqlConnectionPool();
         final Connection connection = sqlConnectionPool.getConnection();
+
         try {
             final Statement statement = connection.createStatement();
             String SQL =
@@ -201,6 +225,28 @@ public class Statistic {
                 }
             }
         } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            sqlConnectionPool.returnConnection(connection);
+        }
+        return "Undefined";
+    }
+
+
+    public String getR4000ChangeStatusDate() {
+        final SqlConnectionPool sqlConnectionPool = new SqlConnectionPool();
+        final Connection connection = sqlConnectionPool.getConnection();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+        try {
+            final Statement statement = connection.createStatement();
+            String SQL =
+                    "select top 1 ChangeDate,NewValue from v_LogDataChange with (nolock) where TableName ='refDistributorsExt' and FieldName = 'usereplicator4000' and idRecord=\'" + distrId + "\' order by ChangeDate desc";
+            final ResultSet resultSet = statement.executeQuery(SQL);
+            while (resultSet.next()) {
+                this.dateOfChange = sdf.parse(resultSet.getString("ChangeDate"));
+            }
+
+        } catch (SQLException | ParseException e) {
             e.printStackTrace();
         } finally {
             sqlConnectionPool.returnConnection(connection);
