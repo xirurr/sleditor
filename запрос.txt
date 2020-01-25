@@ -1,0 +1,47 @@
+declare @date as varchar(8);
+set @date = '20191201';
+with mt as
+(
+select  TenantId from hub.ExchangeAuditLog with (nolock)
+where Date >= @date
+group by TenantId
+),
+logInfo as
+(
+select * from v_LogDataChange where TableName ='refDistributorsExt' and FieldName = 'usereplicator4000'
+)
+
+select  d.Name as NameOfDistributors, d.NodeID,d.id, li.ChangeDate dateOfChange,li.OldValue useReplicatorOldValue, li.NewValue useReplicatorNewValue
+from mt
+join dbo.refDistributors as d on mt.TenantId = d.NodeID
+left join logInfo as li on li.idRecord = d.id
+
+
+
+
+
+
+
+
+
+
+
+
+последний
+
+ with mt as 
+                            ( 
+                            select  TenantId,LastSync from hub.ExchangeAuditLog with (nolock) 
+                            where Date >='20191201'
+                         
+                            ), 
+                            logInfo as 
+                            ( 
+                            select * from v_LogDataChange with (nolock) where TableName ='refDistributorsExt' and FieldName = 'usereplicator4000'
+                            ) 
+                             
+                            select  d.Name as NameOfDistributors, d.NodeID,d.id,li.ChangeDate dateOfChange,
+							li.OldValue useReplicatorOldValue,li.NewValue useReplicatorNewValue ,mt.LastSync SessionDate
+							from mt 
+							join dbo.refDistributors as d on mt.TenantId = d.NodeID
+							left join logInfo as li on li.idRecord = d.id
