@@ -1,0 +1,15 @@
+<config>
+<date>20191201</date><!--yyyyMMdd-->
+<server>dbsrv.systtech.ru</server>
+<dataBase>ch_offtake_delme</dataBase>
+<dataBaseUser></dataBaseUser> <!--clear if us win auth -->
+<dataBasePassword></dataBasePassword> <!--clear if us win auth -->
+<port>default</port>
+<recipients>xirurr@gmail.com;y.egorov@systtech.ru</recipients> <!-- use ";" to separate-->
+<dataType>html</dataType>  <!--html,csv,xls-->
+<delimiter>	</delimiter>
+<mailServer>smtp.gmail.com</mailServer>
+<mailPort>587</mailPort>
+<mailUser>statistictest772@gmail.com</mailUser>
+<mailPassword>asdfio435(jad</mailPassword>
+</config>
