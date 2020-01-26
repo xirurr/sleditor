@@ -24,7 +24,7 @@ public class CSVCreator {
 
 
     public void convertToCSV(List<Statistic> statisticList){
-        FILE_HEADER =statisticList.get(0).listElements().values().toArray();
+        FILE_HEADER =statisticList.get(0).listElements().keySet().toArray();
 
         CSVFormat csvFileFormat = CSVFormat.EXCEL.withRecordSeparator(NEW_LINE_SEPARATOR).withDelimiter(Config.getInstance().getDelimiter());
         try {
@@ -40,7 +40,7 @@ public class CSVCreator {
 
             //Write a new student object list to the CSV file
             for (Statistic distributor : statisticList) {
-                csvFilePrinter.printRecord(distributor.listElements().keySet());
+                csvFilePrinter.printRecord(distributor.listElements().values());
             }
 
         } catch (Exception e) {

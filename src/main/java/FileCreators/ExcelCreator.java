@@ -23,14 +23,14 @@ public class ExcelCreator {
             HSSFSheet sheet = workbook.createSheet("DistributorStatistic");
 
             HSSFRow rowhead = sheet.createRow((short)rownum++);
-            final List<String> characteristics = new ArrayList(statisticList.get(0).listElements().values());
+            final List<String> characteristics = new ArrayList(statisticList.get(0).listElements().keySet());
 
             for (int i = 0; i < characteristics.size(); i++) {
                 rowhead.createCell(i).setCellValue(characteristics.get(i));
             }
             for (Statistic statistic : statisticList) {
                 HSSFRow row = sheet.createRow((short) rownum++);
-                List<String> listOfElements = new ArrayList<>(statistic.listElements().keySet());
+                List<String> listOfElements = new ArrayList<>(statistic.listElements().values());
                 for (int i = 0; i < listOfElements.size(); i++) {
                    row.createCell(i).setCellValue(listOfElements.get(i));
                 }

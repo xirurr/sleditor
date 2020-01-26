@@ -101,17 +101,17 @@ public class Statistic {
     public Map<String, String> listElements() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Map<String, String> parameters = new LinkedHashMap<>();
-        parameters.put(nameOfDistr, "Имя дистрибьютора");
-        parameters.put(nodeId.toString(), "NodeId");
-        parameters.put(distrId.toString(), "ID дистрибьютора");
+        parameters.put("Имя дистрибьютора",nameOfDistr);
+        parameters.put( "NodeId",nodeId.toString());
+        parameters.put("ID дистрибьютора",distrId.toString());
         parameters.put(
-                dateOfChange == null ? "  " : sdf.format(dateOfChange), "Дата включения/отключения R4000");
-        parameters.put(protocol.toString(), "протокол");
-        parameters.put(status, "состояние");
+                 "Дата включения/отключения R4000",dateOfChange == null ? "  " : sdf.format(dateOfChange));
+        parameters.put("протокол",protocol.toString());
+        parameters.put( "состояние",status);
         parameters.put(
-                firstSession == null ? "" : sdf.format(firstSession), "первая сессия периода");
+                "первая сессия периода", firstSession == null ? "не было сессий в периоде" : sdf.format(firstSession));
         parameters.put(
-                lastSession == null ? " " : sdf.format(lastSession), "последняя сессия");
+               "последняя сессия периода", lastSession == null ? "" : sdf.format(lastSession));
         return parameters;
     }
 

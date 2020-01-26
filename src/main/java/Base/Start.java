@@ -105,13 +105,14 @@ public class Start {
                             "finalStat as (select rde.UseReplicator4000 useReplicator4000, rde.id idDistr,st.ChangeDate ChangeDate, st.idRecord, st.useReplicator4000Log useReplicator4000Log from refDistributorsExt  rde\n" +
                             "left join st on st.idRecord = rde.id\n" +
                             ")\n" +
-                            "select rd.NodeID, rd.id,  rd.Name NameOfDistributors, firstSync FirstSession, lastSync LastSession, fs.ChangeDate dateOfChange, fs.useReplicator4000, fs.useReplicator4000Log from statistc st\n" +
+                            "select rd.Emails, rd.NodeID, rd.id,  rd.Name NameOfDistributors, firstSync FirstSession, lastSync LastSession, fs.ChangeDate dateOfChange, fs.useReplicator4000, fs.useReplicator4000Log from statistc st\n" +
                             "join refDistributors rd on rd.NodeID = st.TenantId\n" +
                             "join finalStat fs on fs.idDistr = rd.id \n";
 
             final ResultSet resultSet = statement.executeQuery(SQL);
 
             while (resultSet.next()) {
+                String realValue2 = resultSet.getString("Emails");
 
                 String realValue = resultSet.getString("useReplicator4000");
                 String dateOfChange = resultSet.getString("dateOfChange");
@@ -171,7 +172,7 @@ public class Start {
                             "select cd.id DistributorId, rd.name Name, rd.NodeID, firstSync,lastSync,Protocol from cicerone.Distributors cd\n" +
                             "left join stat st on st.DistributorId = cd.id\n" +
                             "left join refDistributors rd on cd.id = rd.id\n";
-                    final ResultSet resultSet = statement.executeQuery(SQL);
+            final ResultSet resultSet = statement.executeQuery(SQL);
             List<Statistic> tmpListCicerone = new ArrayList<>();
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -184,9 +185,8 @@ public class Start {
                 Date firstSyncD = null;
                 Date lastSyncD = null;
                 String firstSync = resultSet.getString("firstSync");
-
-                if (!firstSync.isBlank()){
-                    firstSyncD =sdf.parse(resultSet.getString("firstSync"));
+                if (firstSync != null) {
+                    firstSyncD = sdf.parse(resultSet.getString("firstSync"));
                     lastSyncD = sdf.parse(resultSet.getString("lastSync"));
                 }
                 final Statistic tmpStatistic = new Statistic(
@@ -206,6 +206,7 @@ public class Start {
             if (e.getMessage().contains("Invalid object name 'cicerone.Sessions'")) {
                 System.out.println("Данные по протоколу Cicerone отсутствуют");
             } else
+
                 e.printStackTrace();
         } finally {
             sqlConnectionPool.returnConnection(connection);
@@ -238,7 +239,6 @@ public class Start {
         statisticList.addAll(tmpListCicerone);
         //  System.out.println(statisticList);
     }
-
 
     private List<Statistic> deleteMarkedElements(List<Statistic> tmpList) {
         System.out.println("удаление дубликатов");

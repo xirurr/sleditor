@@ -25,11 +25,12 @@ public class HTMLCreator {
         Map<String, String> header = statisticList.get(0).listElements();
         Map root = new HashMap();
 
+        long count = statisticList.stream().filter(o -> o.getFirstSession() != null).count();
         root.put("header", header);
         root.put("elements", statisticList);
-        root.put("count", statisticList.size());
+        root.put("countEnabled", statisticList.size());
         root.put("fromDate", Config.getInstance().getDate());
-
+        root.put("hasSessions", count);
 
 
 
