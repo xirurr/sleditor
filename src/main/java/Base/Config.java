@@ -1,6 +1,7 @@
 package Base;
 
 import Exceptions.EmptyConfigFieldException;
+import Services.CurrentPath;
 import lombok.Data;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -11,6 +12,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -43,6 +45,8 @@ public class Config {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+            System.out.println("Проблемы с чтением файла config.xml");
+            System.exit(1);
         } catch (SAXException e) {
             e.printStackTrace();
         }
@@ -91,7 +95,8 @@ public class Config {
         System.out.println("Reading config.xml file");
         dbf = DocumentBuilderFactory.newInstance();
         db = dbf.newDocumentBuilder();
-        doc = db.parse("config.xml");
+        String configPath = CurrentPath.getInstance().getPath();
+        doc = db.parse(configPath+"/config.xml");
         doc.getDocumentElement().normalize();
     }
 

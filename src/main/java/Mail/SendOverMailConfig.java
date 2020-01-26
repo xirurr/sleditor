@@ -2,6 +2,7 @@ package Mail;
 
 import Base.Config;
 import FileCreators.HTMLCreator;
+import Services.CurrentPath;
 import com.sun.mail.smtp.SMTPTransport;
 
 import javax.activation.DataHandler;
@@ -53,14 +54,14 @@ public class SendOverMailConfig implements MailService {
 
             String htmlPage = new HTMLCreator().readHtml();
             htmlContent.setContent(htmlPage, "text/html; charset=windows-1251");
-
+            String path = CurrentPath.getInstance().getPath();
             MimeBodyPart csvFile = new MimeBodyPart();
-            FileDataSource fds = new FileDataSource("statistic.csv");
+            FileDataSource fds = new FileDataSource(path+"statistic.csv");
             csvFile.setDataHandler(new DataHandler(fds));
             csvFile.setFileName(fds.getName());
 
             MimeBodyPart xlsFile = new MimeBodyPart();
-            FileDataSource fds2 = new FileDataSource("statistic.xls");
+            FileDataSource fds2 = new FileDataSource(path+"statistic.xls");
             xlsFile.setDataHandler(new DataHandler(fds2));
             xlsFile.setFileName(fds2.getName());
 

@@ -1,6 +1,7 @@
 package FileCreators;
 
 import DTO.Statistic;
+import Services.CurrentPath;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -16,10 +17,10 @@ public class ExcelCreator {
     int rownum =0;
     public void converToExcel(List<Statistic> statisticList){
         try {
-            String filename = "statistic.xls" ;
+            String path = CurrentPath.getInstance().getPath();
+            String filename = path+"statistic.xls" ;
             HSSFWorkbook workbook = new HSSFWorkbook();
             HSSFSheet sheet = workbook.createSheet("DistributorStatistic");
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
 
             HSSFRow rowhead = sheet.createRow((short)rownum++);
             final List<String> characteristics = new ArrayList(statisticList.get(0).listElements().values());

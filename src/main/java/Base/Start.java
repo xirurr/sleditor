@@ -9,7 +9,14 @@ import FileCreators.HTMLCreator;
 import Mail.MailService;
 import Mail.SendOverMailConfig;
 import SQL.SqlConnectionPool;
+import Services.CurrentPath;
+import Services.PathHelper;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,6 +24,7 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,12 +35,26 @@ public class Start {
     private Connection connection;
     private List<Statistic> statisticList = new ArrayList<>();
 
+
+    static {
+        try {
+            String configPath = CurrentPath.getInstance().getPath();
+            PathHelper.appendToPath(configPath);
+
+        } catch (UnsatisfiedLinkError e) {
+            System.err.println("Native code library failed to load.\n" + e);
+            System.exit(1);
+        }
+    }
+
     public static void main(String[] args) {
         System.out.println(10);
         final Start start = new Start();
         start.configure();
         start.getR4000Data();
         start.getCiceroneData();
+
+        start.clearRecentExport();
         start.createCSV();
         start.createExcel();
         start.createHTML();
@@ -146,11 +168,10 @@ public class Start {
                             "from cicerone.Sessions\n" +
                             "where SessionCreateDate >=\'" + date + "\' \n" +
                             "group by DistributorId)\n" +
-                            "select DistributorId, rd.name Name, rd.NodeID, firstSync, lastSync, Protocol from stat \n" +
-                            "left join cicerone.Distributors cd on cd.id = stat.DistributorId\n" +
-                            "join refDistributors rd on stat.DistributorId = rd.id";
-
-            final ResultSet resultSet = statement.executeQuery(SQL);
+                            "select cd.id DistributorId, rd.name Name, rd.NodeID, firstSync,lastSync,Protocol from cicerone.Distributors cd\n" +
+                            "left join stat st on st.DistributorId = cd.id\n" +
+                            "left join refDistributors rd on cd.id = rd.id\n";
+                    final ResultSet resultSet = statement.executeQuery(SQL);
             List<Statistic> tmpListCicerone = new ArrayList<>();
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -160,12 +181,20 @@ public class Start {
                 if (protocolStatus.isBlank() || protocolStatus.toLowerCase().equals("null")) {
                     tmpStatus = "Disabled";
                 } else tmpStatus = "Enabled";
+                Date firstSyncD = null;
+                Date lastSyncD = null;
+                String firstSync = resultSet.getString("firstSync");
+
+                if (!firstSync.isBlank()){
+                    firstSyncD =sdf.parse(resultSet.getString("firstSync"));
+                    lastSyncD = sdf.parse(resultSet.getString("lastSync"));
+                }
                 final Statistic tmpStatistic = new Statistic(
                         resultSet.getString("Name"),
                         resultSet.getString("DistributorId"),
                         resultSet.getString("NodeID"),
-                        sdf.parse(resultSet.getString("firstSync")),
-                        sdf.parse(resultSet.getString("lastSync")),
+                        firstSyncD,
+                        lastSyncD,
                         tmpStatus,
                         Protocol.Cicerone
                 );
@@ -207,7 +236,7 @@ public class Start {
             }
         }
         statisticList.addAll(tmpListCicerone);
-        System.out.println(statisticList);
+        //  System.out.println(statisticList);
     }
 
 
@@ -240,5 +269,27 @@ public class Start {
             return rs.getRow();
         }
         return 0;
+    }
+
+    private void clearRecentExport() {
+        String tmpPath = CurrentPath.getInstance().getPath();
+        Path pathCSV = Paths.get(tmpPath + "statistic.csv");
+        Path pathExcel = Paths.get(tmpPath + "statistic.html");
+        Path pathHTML = Paths.get(tmpPath + "statistic.xls");
+
+        try {
+            if (Files.exists(pathCSV)) {
+                Files.delete(pathCSV);
+            }
+            if (Files.exists(pathExcel)) {
+                Files.delete(pathExcel);
+            }
+            if (Files.exists(pathHTML)) {
+                Files.delete(pathHTML);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

@@ -1,15 +1,18 @@
 package SQL;
 
+import Base.Config;
 import org.apache.commons.dbcp.ConnectionFactory;
 import org.apache.commons.dbcp.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp.PoolableConnectionFactory;
 import org.apache.commons.dbcp.PoolingDataSource;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
+import java.io.File;
 import java.sql.Connection;
 import java.util.Properties;
 
 public class SqlConnectionPool {
+
 
     public static GenericObjectPool connectionPool;
 

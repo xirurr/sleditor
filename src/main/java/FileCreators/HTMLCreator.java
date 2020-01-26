@@ -7,6 +7,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
 
+import Services.CurrentPath;
 import freemarker.template.*;
 import org.apache.commons.io.FileUtils;
 
@@ -24,15 +25,18 @@ public class HTMLCreator {
         Map<String, String> header = statisticList.get(0).listElements();
         Map root = new HashMap();
 
-        root.put("header",header);
-        root.put("elements",statisticList);
-        root.put("count",statisticList.size());
+        root.put("header", header);
+        root.put("elements", statisticList);
+        root.put("count", statisticList.size());
         root.put("fromDate", Config.getInstance().getDate());
 
-        try {
-            Template template = cfg.getTemplate("table.ftl");
 
-            Writer fileWriter = new FileWriter(new File("statistic.html"), Charset.forName("UTF-8"));
+
+
+        try {
+            String path = CurrentPath.getInstance().getPath();
+            Template template = cfg.getTemplate("table.ftl");
+            Writer fileWriter = new FileWriter(new File(path + "statistic.html"), Charset.forName("UTF-8"));
             template.process(root, fileWriter);
 
         } catch (IOException | TemplateException e) {
@@ -41,7 +45,9 @@ public class HTMLCreator {
 
 
     }
+
     public String readHtml() throws IOException {
-        return  FileUtils.readFileToString(new File("statistic.html"), Charset.forName("UTF-8"));
+        String path = CurrentPath.getInstance().getPath();
+        return FileUtils.readFileToString(new File(path+"statistic.html"), Charset.forName("UTF-8"));
     }
 }
