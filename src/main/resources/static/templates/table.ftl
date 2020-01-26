@@ -1,6 +1,7 @@
 <#import "base/common.ftl" as c>
 <@c.page>
-    <label>C ${fromDate?date("yyyyMMdd")} была включена загрузка с ${countEnabled} дистр. Данные загружались с ${hasSessions} дистр.</label>
+    <label>C ${fromDate?date("yyyyMMdd")} была включена загрузка с ${countEnabled} дистр. Данные загружались
+        с ${hasSessions} дистр.</label>
     <table class="table table-bordered table-hover" id="distributor-list">
         <thead class="thead-dark">
         <tr>
@@ -18,25 +19,12 @@
                 <td align="center">${elements.nameOfDistr}</td>
                 <td align="center">${elements.nodeId}</td>
                 <td align="center">${elements.distrId?c}</td>
-                <#if elements.dateOfChange?has_content>
-                    <td align="center">${elements.dateOfChange}</td>
-                <#else>
-                    <td align="center"></td>
-                </#if>
+                <td align="center">${elements.dateOfChangeString()}</td>
                 <td align="center">${elements.protocol}</td>
                 <td align="center">${elements.status}</td>
+                <td align="center">${elements.firstSessionString()}</td>
+                <td align="center">${elements.lastSessionString()}</td>
 
-                <#if elements.firstSession?has_content>
-                    <td align="center">${elements.firstSession}</td>
-                <#else>
-                    <td align="center"></td>
-                </#if>
-
-                <#if elements.lastSession?has_content>
-                    <td align="center">${elements.lastSession}</td>
-                <#else>
-                    <td align="center"></td>
-                </#if>
             </tr>
         </#list>
         </tbody>

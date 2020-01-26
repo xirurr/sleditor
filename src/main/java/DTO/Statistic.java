@@ -27,7 +27,7 @@ public class Statistic {
 
 
     public Statistic(String nameOfDistr, String nodeId, String distrId,
-                     String dateOfChange, String fSessionTime, String lSessionTime,String status, Protocol r4000) throws LackOfInformationException {
+                     String dateOfChange, String fSessionTime, String lSessionTime, String status, Protocol r4000) throws LackOfInformationException {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -71,9 +71,7 @@ public class Statistic {
     }
 
 
-
-
-    public Statistic(String name, String distrId, String nodeId, Date firstSync, Date lastSync,String status, Protocol cicerone) throws LackOfInformationException {
+    public Statistic(String name, String distrId, String nodeId, Date firstSync, Date lastSync, String status, Protocol cicerone) throws LackOfInformationException {
 
         if (name == null || name.isBlank()) {
             this.nameOfDistr = "empty";
@@ -101,18 +99,36 @@ public class Statistic {
     public Map<String, String> listElements() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Map<String, String> parameters = new LinkedHashMap<>();
-        parameters.put("Имя дистрибьютора",nameOfDistr);
-        parameters.put( "NodeId",nodeId.toString());
-        parameters.put("ID дистрибьютора",distrId.toString());
+        parameters.put("Имя дистрибьютора", nameOfDistr);
+        parameters.put("NodeId", nodeId.toString());
+        parameters.put("ID дистрибьютора", distrId.toString());
         parameters.put(
-                 "Дата включения/отключения R4000",dateOfChange == null ? "  " : sdf.format(dateOfChange));
-        parameters.put("протокол",protocol.toString());
-        parameters.put( "состояние",status);
+                "Дата включения/отключения R4000", dateOfChangeString());
+        parameters.put("протокол", protocol.toString());
+        parameters.put("состояние", status);
         parameters.put(
-                "первая сессия периода", firstSession == null ? "не было сессий в периоде" : sdf.format(firstSession));
+                "первая сессия периода", firstSessionString());
         parameters.put(
-               "последняя сессия периода", lastSession == null ? "" : sdf.format(lastSession));
+                "последняя сессия периода", lastSessionString());
         return parameters;
+    }
+
+    public String firstSessionString() {
+        if (firstSession == null) return "нет сессий за период";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(firstSession);
+    }
+
+    public String lastSessionString() {
+        if (lastSession == null) return "нет сессий за период";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(lastSession);
+    }
+
+    public String dateOfChangeString() {
+        if (dateOfChange == null) return "";
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return sdf.format(dateOfChange);
     }
 
 }
