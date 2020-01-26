@@ -20,9 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.lang.System.currentTimeMillis;
-import static java.lang.System.setOut;
-
 public class Start {
     private Config config;
     private String connectURL;
@@ -61,55 +58,6 @@ public class Start {
 
     }
 
-    /*private void getR4000DataOld() {
-        connection = sqlConnectionPool.getConnection();
-        try {
-            final Statement statement = connection.createStatement();
-            final String date = config.getDate();
-            String SQL =
-                    "with mt as\n" +
-                            "(\n" +
-                            "select  TenantId from hub.ExchangeAuditLog with (nolock)\n" +
-                            "where Date >=\'" + date + "\' \n" +
-                            "group by TenantId\n" +
-                            "),\n" +
-                            "logInfo as\n" +
-                            "(\n" +
-                            "select * from v_LogDataChange where TableName ='refDistributorsExt' and FieldName = 'usereplicator4000'\n" +
-                            ")\n" +
-                            "\n" +
-                            "select  d.Name as NameOfDistributors, d.NodeID,d.id, li.ChangeDate dateOfChange,li.OldValue useReplicatorOldValue, li.NewValue useReplicatorNewValue\n" +
-                            "from mt\n" +
-                            "join dbo.refDistributors as d on mt.TenantId = d.NodeID\n" +
-                            "left join logInfo as li on li.idRecord = d.id\n";
-            final ResultSet resultSet = statement.executeQuery(SQL);
-            while (resultSet.next()) {
-                final Statistic tmpStatistic = new Statistic(resultSet.getString("NameOfDistributors"),
-                        resultSet.getString("NodeID"),
-                        resultSet.getString("id"),
-                        resultSet.getString("dateOfChange"),
-                        resultSet.getString("useReplicatorOldValue"),
-                        resultSet.getString("useReplicatorNewValue"),
-                        Protocol.R4000
-                );
-                checkAndMarkDuplicates(tmpStatistic);
-                statisticList.add(tmpStatistic);
-            }
-            deleteMarkedElements();
-            statisticList.forEach(System.out::println);
-
-            if (statisticList.size() == 0) {
-                System.out.println("R4000 не использовался в этом периоде");
-                System.exit(0);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (LackOfInformationException e) {
-            e.printStackTrace();
-        } finally {
-            sqlConnectionPool.returnConnection(connection);
-        }
-    }*/
 
     private void getR4000Data() {
         System.out.println("получение данных по R4000");
@@ -119,49 +67,63 @@ public class Start {
             final String date = config.getDate();
 
             String SQL =
-                    " with mt as \n" +
-                            "                            ( \n" +
-                            "select  TenantId,MAX(LastSync) LastSync,MIN(LAstSync) FirstSync from hub.ExchangeAuditLog with (nolock) \n" +
+                    " with statistc as (\n" +
+                            "select eal.TenantId, MIN(LastSync) firstSync, MAX(LastSync) lastSync\n" +
+                            "from hub.ExchangeAuditLog eal\n" +
                             "where Date >=\'" + date + "\' \n" +
-                            "group by TenantId\n" +
-                            "), \n" +
-                            "logInfo as \n" +
-                            "( \n" +
-                            "select * from v_LogDataChange with (nolock) where TableName ='refDistributorsExt' and FieldName = 'usereplicator4000'\n" +
-                            ") \n" +
-                            " \n" +
-                            "select  d.Name as NameOfDistributors, d.NodeID,d.id,li.ChangeDate dateOfChange,\n" +
-                            "li.OldValue useReplicatorOldValue,li.NewValue useReplicatorNewValue ,mt.LastSync LastSession, mt.FirstSync FirstSession\n" +
-                            "from mt \n" +
-                            "join dbo.refDistributors as d on mt.TenantId = d.NodeID\n" +
-                            "left join logInfo as li on li.idRecord = d.id";
+                            "group by TenantId),\n" +
+                            "cd as (\n" +
+                            "select MAX(ChangeDate) ChangeDate, idRecord from v_LogDataChange where tableName = 'refDistributorsExt' \n" +
+                            "and idRecord in (select id from refDistributors) and FieldName = 'usereplicator4000'\n" +
+                            "group by idRecord\n" +
+                            "),\n" +
+                            "st as(\n" +
+                            "select ChangeDate, idRecord, NewValue useReplicator4000Log from v_LogDataChange where (ChangeDate in (select ChangeDate from cd) and idRecord in (select idRecord from cd))\n" +
+                            "),\n" +
+                            "finalStat as (select rde.UseReplicator4000 useReplicator4000, rde.id idDistr,st.ChangeDate ChangeDate, st.idRecord, st.useReplicator4000Log useReplicator4000Log from refDistributorsExt  rde\n" +
+                            "left join st on st.idRecord = rde.id\n" +
+                            ")\n" +
+                            "select rd.NodeID, rd.id,  rd.Name NameOfDistributors, firstSync FirstSession, lastSync LastSession, fs.ChangeDate dateOfChange, fs.useReplicator4000, fs.useReplicator4000Log from statistc st\n" +
+                            "join refDistributors rd on rd.NodeID = st.TenantId\n" +
+                            "join finalStat fs on fs.idDistr = rd.id \n";
 
             final ResultSet resultSet = statement.executeQuery(SQL);
 
             List<Statistic> tmpListCicerone = new ArrayList<>();
             int count = 0;
             while (resultSet.next()) {
+
+                String realValue = resultSet.getString("useReplicator4000");
+                String dateOfChange = resultSet.getString("dateOfChange");
+                String status;
+                if (!realValue.equals(resultSet.getString("useReplicator4000Log"))) {
+                    dateOfChange = null;
+                }
+                switch (realValue) {
+                    case "":
+                    case "null":
+                    case " ":
+                    case "0":
+                        status = "Disabled";
+                        break;
+                    default:
+                        status = "Enabled";
+                        break;
+                }
                 final Statistic tmpStatistic = new Statistic(resultSet.getString("NameOfDistributors"),
                         resultSet.getString("NodeID"),
                         resultSet.getString("id"),
-                        resultSet.getString("dateOfChange"),
+                        dateOfChange,
                         resultSet.getString("FirstSession"),
                         resultSet.getString("LastSession"),
-                        resultSet.getString("useReplicatorOldValue"),
-                        resultSet.getString("useReplicatorNewValue"),
+                        status,
                         Protocol.R4000
                 );
                 count++;
-
-                tmpListCicerone = compareSessions(tmpListCicerone, tmpStatistic);
-                //  checkAndMarkDuplicates(tmpStatistic);
-
+                statisticList.add(tmpStatistic);
             }
-            System.out.println("обработано " + count + " сессий R4000");
-            deleteMarkedElements();
-            statisticList.addAll(tmpListCicerone);
-            //  statisticList.forEach(System.out::println);
 
+            //  statisticList.forEach(System.out::println);
             if (statisticList.size() == 0) {
                 System.out.println("R4000 не использовался в этом периоде");
                 System.exit(0);
@@ -181,36 +143,40 @@ public class Start {
         try {
             final Statement statement = connection.createStatement();
             final String date = config.getDate();
-
             String SQL =
-                    "with statistc as (\n" +
+                    "with stat as(\n" +
                             "select DistributorId, MIN(SessionCreateDate) firstSync, MAX(SessionCreateDate) lastSync\n" +
-                            "from cicerone.Sessions  \n" +
+                            "from cicerone.Sessions\n" +
                             "where SessionCreateDate >=\'" + date + "\' \n" +
                             "group by DistributorId)\n" +
-                            "select rd.NodeID, rd.id distrId rd.Name, firstSync, lastSync from statistc st\n" +
-                            "join refDistributors rd on rd.id = st.DistributorId";
+                            "select DistributorId, rd.name Name, rd.NodeID, firstSync, lastSync, Protocol from stat \n" +
+                            "left join cicerone.Distributors cd on cd.id = stat.DistributorId\n" +
+                            "join refDistributors rd on stat.DistributorId = rd.id";
 
             final ResultSet resultSet = statement.executeQuery(SQL);
             List<Statistic> tmpListCicerone = new ArrayList<>();
             int count = 0;
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
             while (resultSet.next()) {
+                String protocolStatus = resultSet.getString("Protocol");
+                String tmpStatus;
+                if (protocolStatus.isBlank() || protocolStatus.toLowerCase().equals("null")) {
+                    tmpStatus = "Disabled";
+                } else tmpStatus = "Enabled";
                 final Statistic tmpStatistic = new Statistic(
                         resultSet.getString("Name"),
-                        resultSet.getString("distrId"),
+                        resultSet.getString("DistributorId"),
                         resultSet.getString("NodeID"),
                         sdf.parse(resultSet.getString("firstSync")),
                         sdf.parse(resultSet.getString("lastSync")),
+                        tmpStatus,
                         Protocol.Cicerone
                 );
-
-                tmpListCicerone = compareSessions(tmpListCicerone, tmpStatistic);
+                tmpListCicerone.add(tmpStatistic);
             }
 
             combineR4000AndCiceroneData(tmpListCicerone);
-            System.out.println("обработано " + count + " сессий Cicerone");
-            deleteMarkedElements();
+            statisticList = deleteMarkedElements(statisticList);
         } catch (SQLException | LackOfInformationException | ParseException e) {
             if (e.getMessage().contains("Invalid object name 'cicerone.Sessions'")) {
                 System.out.println("Данные по протоколу Cicerone отсутствуют");
@@ -221,62 +187,39 @@ public class Start {
         }
     }
 
-    private void combineR4000AndCiceroneData(List<Statistic> tmpListCicerone) { //проверять какой протокол и в зависимости от этого выводить последнюю статистику
+    private void combineR4000AndCiceroneData(List<Statistic> tmpListCicerone) {
         System.out.println("CombiningR4000AndCiceroneData");
         for (Statistic tmpStatistic : tmpListCicerone) {
             for (Statistic statistic : statisticList) {
                 if (statistic.getDistrId().equals(tmpStatistic.getDistrId())) {
-                    statistic.setProtocol(Protocol.R4000andCicerore);
-                    statistic.setStatus("Cicerone: " + tmpStatistic.getStatus() + " " + "R4000: " + statistic.getStatus());
                     if (tmpStatistic.getStatus().equals("Enabled") && statistic.getStatus().equals("Disabled")) {
-                        statistic.setFirstSession(tmpStatistic.getFirstSession());
-                        statistic.setLastSession(tmpStatistic.getLastSession());
+                        tmpStatistic.setDateOfChange(statistic.getDateOfChange());
+                        statistic.setDeletedMark(true);
                     }
-                    tmpStatistic.setDeletedMark(true);
-
+                    if (tmpStatistic.getStatus().equals("Disabled") && statistic.getStatus().equals("Enabled")) {
+                        tmpStatistic.setDeletedMark(true);
+                    }
+                    if (tmpStatistic.getStatus().equals("Disabled") && statistic.getStatus().equals("Disabled")) {
+                        if (tmpStatistic.getFirstSession().after(statistic.getFirstSession())) {
+                            tmpStatistic.setDateOfChange(statistic.getDateOfChange());
+                            statistic.setDeletedMark(true);
+                        } else {
+                            tmpStatistic.setDeletedMark(true);
+                        }
+                    }
                 }
             }
         }
         System.out.println(tmpListCicerone.size());
         System.out.println(statisticList.size());
+
         statisticList.addAll(tmpListCicerone);
     }
 
-    private List<Statistic> compareSessions(List<Statistic> tmpStatisticList, Statistic tmpStatistic) {
-        if (tmpStatisticList.size() == 0) {
-            tmpStatisticList.add(tmpStatistic);
-            return tmpStatisticList;
-        }
-        Statistic objectToRemove = null;
-        for (Statistic statistic : tmpStatisticList) {
-            if (statistic.getDistrId().equals(tmpStatistic.getDistrId())) {
-                tmpStatistic.setFirstSession(statistic.getFirstSession().before(tmpStatistic.getFirstSession()) ? statistic.getFirstSession() : tmpStatistic.getFirstSession());
-                tmpStatistic.setLastSession(statistic.getLastSession().after(tmpStatistic.getLastSession()) ? statistic.getLastSession() : tmpStatistic.getLastSession());
-                if (statistic.getDateOfChange() != null)
-                    tmpStatistic.setDateOfChange(statistic.getDateOfChange().after(tmpStatistic.getDateOfChange()) ? statistic.getDateOfChange() : tmpStatistic.getDateOfChange());
-                objectToRemove = statistic;
-            }
-        }
-        tmpStatisticList.remove(objectToRemove);
-        tmpStatisticList.add(tmpStatistic);
-        return tmpStatisticList;
-    }
 
-    private void checkAndMarkDuplicates(Statistic tmp) {
-        for (Statistic statistic : statisticList) {
-            if (statistic.getDistrId().equals(tmp.getDistrId())) {
-                if (statistic.getDateOfChange().before(tmp.getDateOfChange())) {
-                    statistic.setDeletedMark(true);
-                } else {
-                    tmp.setDeletedMark(true);
-                }
-            }
-        }
-    }
-
-    private void deleteMarkedElements() {
+    private List<Statistic> deleteMarkedElements(List<Statistic> tmpList) {
         System.out.println("удаление дубликатов");
-        statisticList = statisticList.stream()
+        return tmpList.stream()
                 .filter(e -> !e.isDeletedMark())
                 .collect(Collectors.toList());
     }

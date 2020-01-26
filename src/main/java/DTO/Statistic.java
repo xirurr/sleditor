@@ -27,8 +27,7 @@ public class Statistic {
 
 
     public Statistic(String nameOfDistr, String nodeId, String distrId,
-                     String dateOfChange, String firstSession, String lastSession, String useReplicatorOldValue,
-                     String useReplicatorNewValue, Protocol r4000) throws LackOfInformationException {
+                     String dateOfChange, String firstSession, String lastSession,String status, Protocol r4000) throws LackOfInformationException {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
 
@@ -67,7 +66,7 @@ public class Statistic {
                 e.printStackTrace();
             }
         }
-        status = checkDistrStatus(useReplicatorOldValue, useReplicatorNewValue);
+        this.status = status;
         this.protocol = r4000;
     }
 
@@ -108,7 +107,7 @@ public class Statistic {
     }
 
 
-    public Statistic(String name, String distrId, String nodeId, Date firstSync, Date lastSync, Protocol protocol) throws LackOfInformationException {
+    public Statistic(String name, String distrId, String nodeId, Date firstSync, Date lastSync,String status, Protocol protocol) throws LackOfInformationException {
 
         if (name == null || name.isBlank()) {
             this.nameOfDistr = "empty";
@@ -128,63 +127,7 @@ public class Statistic {
         this.firstSession = firstSync;
         this.lastSession = lastSync;
         this.protocol = protocol;
-        status = checkDistrStatus(distrId, protocol);
-
-    }
-
-
-    private String checkDistrStatus(String useReplicatorOldValue, String useReplicatorNewValue) {
-        Boolean oldBoolValue;
-        Boolean newBoolValue;
-        if (useReplicatorOldValue == null || useReplicatorOldValue.isEmpty()) {
-            oldBoolValue = null;
-        } else {
-            oldBoolValue = Integer.parseInt(useReplicatorOldValue) != 0;
-        }
-        if (useReplicatorNewValue == null || useReplicatorNewValue.isEmpty()) {
-            newBoolValue = null;
-        } else {
-            newBoolValue = Integer.parseInt(useReplicatorNewValue) != 0;
-        }
-        if (oldBoolValue == null || newBoolValue == null) {
-            return getR4000CurrentStatusFromDb();
-        } else if (oldBoolValue == false && newBoolValue == false) {
-            return "Disabled";
-        } else if (oldBoolValue == false && newBoolValue == true) {
-            return "Enabled";
-        } else if (oldBoolValue == true && newBoolValue == false) {
-            return "Disabled";
-        } else {
-            return "Undefined";
-        }
-
-
-    }
-
-
-    private String checkDistrStatus(String distrId, Protocol protocol) {
-        switch (protocol) {
-            case R4000:
-                return getR4000CurrentStatusFromDb();
-            break;
-            case Cicerone:
-                getR4000CurrentStatusFromDb();
-                break;
-            case R4000andCicerore:
-                break;
-        }
-        if (oldBoolValue == null || newBoolValue == null) {
-            return getR4000CurrentStatusFromDb();
-        } else if (newBoolValue == false) {
-            return
-        } else if (newBoolValue == true) {
-            return
-        } else if (newBoolValue == false) {
-            return "Disabled";
-        } else {
-            return "Undefined";
-        }
-
+        this.status = status;
 
     }
 
@@ -205,54 +148,5 @@ public class Statistic {
                 lastSession == null ? " " : sdf.format(lastSession), "последняя сессия");
         return parameters;
     }
-
-
-    public String getR4000CurrentStatusFromDb() {
-        final SqlConnectionPool sqlConnectionPool = new SqlConnectionPool();
-        final Connection connection = sqlConnectionPool.getConnection();
-
-        try {
-            final Statement statement = connection.createStatement();
-            String SQL =
-                    "Select UseReplicator4000 from refDistributorsExt  where id =" + distrId;
-            final ResultSet resultSet = statement.executeQuery(SQL);
-            while (resultSet.next()) {
-                if (resultSet.getString("UseReplicator4000").equals("0")) {
-                    return "Disabled";
-                }
-                if (!resultSet.getString("UseReplicator4000").isEmpty()) {
-                    return "Enabled";
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            sqlConnectionPool.returnConnection(connection);
-        }
-        return "Undefined";
-    }
-
-
-    public String getR4000ChangeStatusDate() {
-        final SqlConnectionPool sqlConnectionPool = new SqlConnectionPool();
-        final Connection connection = sqlConnectionPool.getConnection();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
-        try {
-            final Statement statement = connection.createStatement();
-            String SQL =
-                    "select top 1 ChangeDate,NewValue from v_LogDataChange with (nolock) where TableName ='refDistributorsExt' and FieldName = 'usereplicator4000' and idRecord=\'" + distrId + "\' order by ChangeDate desc";
-            final ResultSet resultSet = statement.executeQuery(SQL);
-            while (resultSet.next()) {
-                this.dateOfChange = sdf.parse(resultSet.getString("ChangeDate"));
-            }
-
-        } catch (SQLException | ParseException e) {
-            e.printStackTrace();
-        } finally {
-            sqlConnectionPool.returnConnection(connection);
-        }
-        return "Undefined";
-    }
-
 
 }
