@@ -89,8 +89,6 @@ public class Start {
 
             final ResultSet resultSet = statement.executeQuery(SQL);
 
-            List<Statistic> tmpListCicerone = new ArrayList<>();
-            int count = 0;
             while (resultSet.next()) {
 
                 String realValue = resultSet.getString("useReplicator4000");
@@ -119,7 +117,6 @@ public class Start {
                         status,
                         Protocol.R4000
                 );
-                count++;
                 statisticList.add(tmpStatistic);
             }
 
@@ -155,8 +152,8 @@ public class Start {
 
             final ResultSet resultSet = statement.executeQuery(SQL);
             List<Statistic> tmpListCicerone = new ArrayList<>();
-            int count = 0;
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             while (resultSet.next()) {
                 String protocolStatus = resultSet.getString("Protocol");
                 String tmpStatus;
@@ -174,7 +171,6 @@ public class Start {
                 );
                 tmpListCicerone.add(tmpStatistic);
             }
-
             combineR4000AndCiceroneData(tmpListCicerone);
             statisticList = deleteMarkedElements(statisticList);
         } catch (SQLException | LackOfInformationException | ParseException e) {
@@ -210,10 +206,8 @@ public class Start {
                 }
             }
         }
-        System.out.println(tmpListCicerone.size());
-        System.out.println(statisticList.size());
-
         statisticList.addAll(tmpListCicerone);
+        System.out.println(statisticList);
     }
 
 

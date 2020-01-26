@@ -27,9 +27,9 @@ public class Statistic {
 
 
     public Statistic(String nameOfDistr, String nodeId, String distrId,
-                     String dateOfChange, String firstSession, String lastSession,String status, Protocol r4000) throws LackOfInformationException {
+                     String dateOfChange, String fSessionTime, String lSessionTime,String status, Protocol r4000) throws LackOfInformationException {
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
         if (nameOfDistr == null || nameOfDistr.isBlank()) {
             this.nameOfDistr = "empty";
@@ -57,11 +57,11 @@ public class Statistic {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        if (!firstSession.isBlank()) {
+        if (!fSessionTime.isBlank()) {
             try {
-                sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSSSSSS");
-                this.firstSession = sdf.parse(firstSession);
-                this.lastSession = sdf.parse(lastSession);
+                sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                this.firstSession = sdf.parse(fSessionTime);
+                this.lastSession = sdf.parse(lSessionTime);
             } catch (ParseException e) {
                 e.printStackTrace();
             }
@@ -71,43 +71,9 @@ public class Statistic {
     }
 
 
-    public Statistic(String nameOfDistr, String nodeId, String distributorFromSessions,
-                     String sessionDate, String connectedDistributor,
-                     Protocol cicerone) throws LackOfInformationException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
-        if (nameOfDistr == null || nameOfDistr.isEmpty()) {
-            this.nameOfDistr = "empty";
-        } else {
-            this.nameOfDistr = nameOfDistr;
-        }
-
-        if (nodeId == null || nodeId.isBlank()) {
-            throw new LackOfInformationException("nodeId cannot be empty");
-        } else {
-            this.nodeId = Long.parseLong(nodeId);
-        }
-
-        if (distributorFromSessions == null || distributorFromSessions.isBlank()) {
-            throw new LackOfInformationException("distributorFromSessions cannot be empty");
-        } else {
-            this.distrId = Long.parseLong(distributorFromSessions);
-        }
-        try {
-            if (sessionDate == null || sessionDate.isEmpty()) {
-                throw new LackOfInformationException("Cicerone session date cannot be empty");
-            } else {
-                this.firstSession = sdf.parse(sessionDate);
-                this.lastSession = sdf.parse(sessionDate);
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        status = connectedDistributor.isBlank() ? "Disabled" : "Enabled";
-        this.protocol = cicerone;
-    }
 
 
-    public Statistic(String name, String distrId, String nodeId, Date firstSync, Date lastSync,String status, Protocol protocol) throws LackOfInformationException {
+    public Statistic(String name, String distrId, String nodeId, Date firstSync, Date lastSync,String status, Protocol cicerone) throws LackOfInformationException {
 
         if (name == null || name.isBlank()) {
             this.nameOfDistr = "empty";
@@ -126,14 +92,14 @@ public class Statistic {
         }
         this.firstSession = firstSync;
         this.lastSession = lastSync;
-        this.protocol = protocol;
+        this.protocol = cicerone;
         this.status = status;
 
     }
 
 
     public Map<String, String> listElements() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Map<String, String> parameters = new LinkedHashMap<>();
         parameters.put(nameOfDistr, "Имя дистрибьютора");
         parameters.put(nodeId.toString(), "NodeId");
