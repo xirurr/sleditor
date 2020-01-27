@@ -180,7 +180,7 @@ public class Start {
             while (resultSet.next()) {
                 String name = resultSet.getString("enabledName");
                 String nodeId = resultSet.getString("enabledNodeID");
-                String distrId = resultSet.getString("statistcDistr");
+                String distrId = resultSet.getString("enabledDistr");
 
                 if (name == null) name = resultSet.getString("statisticName");
                 if (nodeId == null) nodeId = resultSet.getString("statisticNodeID");
