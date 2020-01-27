@@ -169,17 +169,28 @@ public class Start {
                             "from cicerone.Sessions\n" +
                             "where SessionCreateDate >=\'" + date + "\' \n" +
                             "group by DistributorId)\n" +
-                            "select cd.id DistributorId, rd.name Name, rd.NodeID, firstSync,lastSync,Protocol from cicerone.Distributors cd\n" +
-                            "left join stat st on st.DistributorId = cd.id\n" +
-                            "left join refDistributors rd on cd.id = rd.id\n";
+                            "select st.DistributorId statistcDistr, cd.id enabledDistr, rd.name enabledName, rd.NodeID enabledNodeID, rd2.name statisticName, rd2.NodeID statisticNodeID, firstSync,lastSync,Protocol from cicerone.Distributors cd\n" +
+                            "full outer join stat st on st.DistributorId = cd.id\n" +
+                            "left join refDistributors rd on cd.id = rd.id\n" +
+                            "left join refDistributors rd2 on st.DistributorId = rd2.id";
             final ResultSet resultSet = statement.executeQuery(SQL);
             List<Statistic> tmpListCicerone = new ArrayList<>();
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             while (resultSet.next()) {
+                String name = resultSet.getString("enabledName");
+                String nodeId = resultSet.getString("enabledNodeID");
+                String distrId = resultSet.getString("statistcDistr");
+
+                if (name == null) name = resultSet.getString("statisticName");
+                if (nodeId == null) nodeId = resultSet.getString("statisticNodeID");
+                if (distrId == null) distrId = resultSet.getString("statistcDistr");
+
                 String protocolStatus = resultSet.getString("Protocol");
+
                 String tmpStatus;
-                if (protocolStatus.isBlank() || protocolStatus.toLowerCase().equals("null")) {
+
+                if (protocolStatus == null || protocolStatus.isBlank() || protocolStatus.isEmpty()) {
                     tmpStatus = "Disabled";
                 } else tmpStatus = "Enabled";
                 Date firstSyncD = null;
@@ -190,9 +201,9 @@ public class Start {
                     lastSyncD = sdf.parse(resultSet.getString("lastSync"));
                 }
                 final Statistic tmpStatistic = new Statistic(
-                        resultSet.getString("Name"),
-                        resultSet.getString("DistributorId"),
-                        resultSet.getString("NodeID"),
+                        name,
+                        distrId,
+                        nodeId,
                         firstSyncD,
                         lastSyncD,
                         tmpStatus,
