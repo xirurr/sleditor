@@ -9,9 +9,7 @@ import javax.activation.DataHandler;
 import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.*;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class SendOverMailConfig implements MailService {
@@ -41,7 +39,7 @@ public class SendOverMailConfig implements MailService {
         try {
             msg.setFrom(new InternetAddress(instance.getMailUser()));
 
-            List<String> recipients = instance.getRecipients();
+            List<String> recipients = instance.getRecipientsForAll();
             for (String recipient : recipients) {
                 msg.addRecipient(Message.RecipientType.TO, new InternetAddress(recipient, false));
             }

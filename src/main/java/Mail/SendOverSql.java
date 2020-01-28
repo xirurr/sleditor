@@ -1,22 +1,11 @@
 package Mail;
 
 import Base.Config;
-import DTO.Statistic;
 import FileCreators.HTMLCreator;
 import SQL.SqlConnectionPool;
-import org.apache.commons.io.FileUtils;
 
-import org.apache.commons.pool.impl.GenericObjectPool;
-import org.apache.commons.text.StringEscapeUtils;
-import org.jsoup.Jsoup;
-
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
@@ -53,7 +42,7 @@ public class SendOverSql implements MailService{
     private String readRecepientsList(){
         StringBuilder list = new StringBuilder("\'");
         Config instance = Config.getInstance();
-        List<String> recipients = instance.getRecipients();
+        List<String> recipients = instance.getRecipientsForAll();
         for (String recipient : recipients) {
             list.append(recipient+";");
         }

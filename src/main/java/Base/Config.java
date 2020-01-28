@@ -1,6 +1,5 @@
 package Base;
 
-import Exceptions.EmptyConfigFieldException;
 import Services.CurrentPath;
 import lombok.Data;
 import org.w3c.dom.Document;
@@ -12,7 +11,6 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -29,7 +27,7 @@ public class Config {
     private DocumentBuilder db = null;
     private Document doc = null;
     private Character delimiter;
-    private List<String> recipients = new ArrayList<>();
+    private List<String> recipientsForAll = new ArrayList<>();
     private String mailServer;
     private String mailPort;
     private String mailUser;
@@ -80,7 +78,7 @@ public class Config {
                     port = ":" + port + ";";
                 }
                 delimiter = eElement.getElementsByTagName("delimiter").item(0).getTextContent().charAt(0);
-                recipients = Arrays.asList(eElement.getElementsByTagName("recipients").item(0).getTextContent().split(";"));
+                recipientsForAll = Arrays.asList(eElement.getElementsByTagName("recipients").item(0).getTextContent().split(";"));
 
                 mailServer = eElement.getElementsByTagName("mailServer").item(0).getTextContent();
                 mailPort = eElement.getElementsByTagName("mailPort").item(0).getTextContent();
@@ -114,7 +112,7 @@ public class Config {
         objectObjectHashMap.put("mailPort", mailPort);
         objectObjectHashMap.put("mailUser", mailUser);
         objectObjectHashMap.put("mailPassword", mailPassword);
-        objectObjectHashMap.put("recipients", recipients.toString());
+        objectObjectHashMap.put("recipients", recipientsForAll.toString());
         return objectObjectHashMap;
     }
 

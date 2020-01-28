@@ -282,7 +282,10 @@ public class Start {
     private int getSize(ResultSet rs) throws SQLException {
         if (rs != null) {
             rs.last();
-            return rs.getRow();
+            int row = rs.getRow();
+            rs.beforeFirst();
+            return row;
+
         }
         return 0;
     }
