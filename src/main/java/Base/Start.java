@@ -80,7 +80,6 @@ public class Start {
 
     }
 
-
     private void getR4000Data() {
         System.out.println("получение данных по R4000");
         connection = sqlConnectionPool.getConnection();
@@ -89,31 +88,37 @@ public class Start {
             final String date = config.getDate();
 
             String SQL =
-                    " with statistc as (\n" +
-                            "select eal.TenantId, MIN(LastSync) firstSync, MAX(LastSync) lastSync\n" +
-                            "from hub.ExchangeAuditLog eal\n" +
-                            "where Date >=\'" + date + "\' \n" +
-                            "group by TenantId),\n" +
-                            "cd as (\n" +
-                            "select MAX(ChangeDate) ChangeDate, idRecord from v_LogDataChange where tableName = 'refDistributorsExt' \n" +
+                    "\n" +
+                            "select MAX(ChangeDate) ChangeDate, idRecord\n" +
+                            "into #cd1\n" +
+                            "from v_LogDataChange \n" +
+                            "where tableName = 'refDistributorsExt' \n" +
                             "and idRecord in (select id from refDistributors) and FieldName = 'usereplicator4000'\n" +
-                            "group by idRecord\n" +
+                            "group by idRecord;\n" +
+
+
+                            "select eal.TenantId, MIN(LastSync) firstSync, MAX(LastSync) lastSync\n" +
+                            "into #statistc\n" +
+                            "from hub.ExchangeAuditLog eal\n" +
+                            "where Date >='20190101'\n" +
+                            "group by TenantId;\n" +
+
+
+                            "with st as(\n" +
+                            "select ChangeDate, idRecord, NewValue useReplicator4000Log from v_LogDataChange where (ChangeDate in (select ChangeDate from #cd1) and idRecord in (select idRecord from #cd1))\n" +
                             "),\n" +
-                            "st as(\n" +
-                            "select ChangeDate, idRecord, NewValue useReplicator4000Log from v_LogDataChange where (ChangeDate in (select ChangeDate from cd) and idRecord in (select idRecord from cd))\n" +
-                            "),\n" +
-                            "finalStat as (select rde.UseReplicator4000 useReplicator4000, rde.id idDistr,st.ChangeDate ChangeDate, st.idRecord, st.useReplicator4000Log useReplicator4000Log from refDistributorsExt  rde\n" +
+                            "finalStat as \n" +
+                            "(select rde.UseReplicator4000 useReplicator4000, rde.id idDistr,st.ChangeDate ChangeDate, st.idRecord, st.useReplicator4000Log useReplicator4000Log from refDistributorsExt  rde\n" +
                             "left join st on st.idRecord = rde.id\n" +
                             ")\n" +
-                            "select rd.Emails, rd.NodeID, rd.id,  rd.Name NameOfDistributors, firstSync FirstSession, lastSync LastSession, fs.ChangeDate dateOfChange, fs.useReplicator4000, fs.useReplicator4000Log from statistc st\n" +
+                            "select rd.Emails, rd.NodeID, rd.id,  rd.Name NameOfDistributors, firstSync FirstSession, lastSync LastSession, fs.ChangeDate dateOfChange, fs.useReplicator4000, fs.useReplicator4000Log from #statistc st\n" +
                             "join refDistributors rd on rd.NodeID = st.TenantId\n" +
-                            "join finalStat fs on fs.idDistr = rd.id \n";
+                            "join finalStat fs on fs.idDistr = rd.id \n" +
+                            "drop table #cd1,#statistc";
 
             final ResultSet resultSet = statement.executeQuery(SQL);
 
             while (resultSet.next()) {
-                String realValue2 = resultSet.getString("Emails");
-
                 String realValue = resultSet.getString("useReplicator4000");
                 String dateOfChange = resultSet.getString("dateOfChange");
                 String status;
