@@ -1,13 +1,8 @@
 package DTO;
 
 import Exceptions.LackOfInformationException;
-import SQL.SqlConnectionPool;
 import lombok.Data;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

@@ -1,13 +1,11 @@
-package SQL;
+package Pools;
 
-import Base.Config;
 import org.apache.commons.dbcp.ConnectionFactory;
 import org.apache.commons.dbcp.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp.PoolableConnectionFactory;
 import org.apache.commons.dbcp.PoolingDataSource;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
-import java.io.File;
 import java.sql.Connection;
 import java.util.Properties;
 
@@ -51,7 +49,6 @@ public class SqlConnectionPool {
 
     public void initISConnectionPool(String dbURL) {
         System.out.println("connection over "+dbURL);
-        prepareAuthDll();
         try {
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
@@ -103,7 +100,5 @@ public class SqlConnectionPool {
         }
     }
 
-    private void prepareAuthDll() {
-     //   Runtime.getRuntime().load("\\sqljdbc_auth.dll");
-    }
+
 }

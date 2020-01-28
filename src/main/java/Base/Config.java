@@ -23,6 +23,7 @@ public class Config {
     private String dataBaseUser = "";
     private String dataBasePassword = "";
     private String connectURL;
+    private List<ProjectConf> projectConfs = new ArrayList<>();
     private DocumentBuilderFactory dbf = null;
     private DocumentBuilder db = null;
     private Document doc = null;

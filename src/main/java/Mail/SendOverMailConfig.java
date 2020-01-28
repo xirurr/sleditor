@@ -1,9 +1,13 @@
 package Mail;
 
 import Base.Config;
+import Base.ProjectConf;
 import FileCreators.HTMLCreator;
+import Pools.MailConnectionPool;
 import Services.CurrentPath;
 import com.sun.mail.smtp.SMTPTransport;
+import org.nlab.smtp.pool.SmtpConnectionPool;
+import org.nlab.smtp.transport.connection.ClosableSmtpConnection;
 
 import javax.activation.DataHandler;
 import javax.activation.FileDataSource;
@@ -13,28 +17,24 @@ import java.io.IOException;
 import java.util.*;
 
 public class SendOverMailConfig implements MailService {
+    ProjectConf currentProject;
+    MailConnectionPool mailConnectionPool;
+    public SendOverMailConfig(ProjectConf projectConf) {
+        currentProject = projectConf;
+    }
+    public SendOverMailConfig(){
+
+    }
+
 
     @Override
     public void sendMail() {
         Config instance = Config.getInstance();
-        Properties prop = System.getProperties();
 
-        prop.put("mail.smtp.host", instance.getMailServer()); //optional, defined in SMTPTransport
-        prop.put("mail.smtp.auth", "true");
-        prop.put("mail.smtp.port", instance.getMailPort()); // default port 25
-     //   prop.put("mail.smtp.ssl.enable", "true");
-        prop.put("mail.smtp.starttls.enable", "true");
 
-        System.out.println("login "+instance.getMailUser());
-        System.out.println("password "+ instance.getMailPassword());
-
-        Session session = Session.getInstance(prop,
-                new javax.mail.Authenticator() {
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(instance.getMailUser(), instance.getMailPassword());
-                    }
-                });
-        Message msg = new MimeMessage(session);
+        mailConnectionPool = new MailConnectionPool();
+        ClosableSmtpConnection connection = mailConnectionPool.getConnection();
+        MimeMessage msg = new MimeMessage(connection.getSession());
 
         try {
             msg.setFrom(new InternetAddress(instance.getMailUser()));
@@ -73,23 +73,16 @@ public class SendOverMailConfig implements MailService {
             msg.setSentDate(new Date());
 
 
-            // Get SMTPTransport
-            // SMTPTransport t = (SMTPTransport) session.getTransport("smtp");
-            SMTPTransport t = (SMTPTransport) session.getTransport("smtp");
-
-            // connect
-            t.connect(instance.getMailServer(), instance.getMailUser(), instance.getMailPassword());
-
             // send
-            t.sendMessage(msg, msg.getAllRecipients());
+            connection.sendMessage(msg, msg.getAllRecipients());
 
-            System.out.println("Response: " + t.getLastServerResponse());
-
-            t.close();
 
         } catch (MessagingException |
                 IOException e) {
             e.printStackTrace();
+        }
+        finally {
+            mailConnectionPool.returnConnection(connection);
         }
     }
 }

@@ -2,7 +2,7 @@ package Mail;
 
 import Base.Config;
 import FileCreators.HTMLCreator;
-import SQL.SqlConnectionPool;
+import Pools.SqlConnectionPool;
 
 import java.io.IOException;
 import java.sql.Connection;

@@ -8,11 +8,10 @@ import FileCreators.ExcelCreator;
 import FileCreators.HTMLCreator;
 import Mail.MailService;
 import Mail.SendOverMailConfig;
-import SQL.SqlConnectionPool;
+import Pools.SqlConnectionPool;
 import Services.CurrentPath;
 import Services.PathHelper;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,10 +63,9 @@ public class Start {
     private void sendMail() {
 /*        final SendOverSql sendOverSql = new SendOverSql();
         sendOverSql.sendMail();*/
-        MailService sendOverMailConfig = new SendOverMailConfig();
+       MailService sendOverMailConfig = new SendOverMailConfig();
         sendOverMailConfig.sendMail();
     }
-
 
     private void configure() {
         config = Config.getInstance();
