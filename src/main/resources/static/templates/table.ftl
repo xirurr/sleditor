@@ -1,7 +1,7 @@
 <#import "base/common.ftl" as c>
 <@c.page>
-    <label>C ${fromDate?date("yyyyMMdd")} была включена загрузка с ${countEnabled} дистр. Данные загружались
-        с ${hasSessions} дистр.</label>
+    <label>C ${fromDate?date("yyyyMMdd")} была включена загрузка по ${countEnabled} дистр. Данные загружались
+        по ${hasSessions} дистр.</label>
     <table class="table table-bordered table-hover" id="distributor-list">
         <thead class="thead-dark">
         <tr>

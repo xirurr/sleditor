@@ -1,5 +1,6 @@
 package Pools;
 
+import lombok.Data;
 import org.apache.commons.dbcp.ConnectionFactory;
 import org.apache.commons.dbcp.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp.PoolableConnectionFactory;
@@ -9,10 +10,11 @@ import org.apache.commons.pool.impl.GenericObjectPool;
 import java.sql.Connection;
 import java.util.Properties;
 
+@Data
 public class SqlConnectionPool {
 
 
-    public static GenericObjectPool connectionPool;
+    public GenericObjectPool connectionPool;
 
     public SqlConnectionPool() {
     }

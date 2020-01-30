@@ -11,7 +11,14 @@ import Services.CurrentPath;
 import freemarker.template.*;
 import org.apache.commons.io.FileUtils;
 
-public class HTMLCreator {
+public class HTMLCreator extends AbstractCreator {
+
+    public HTMLCreator() {
+    }
+
+    public HTMLCreator(String dbName) {
+        super(dbName);
+    }
 
     public void convertToHMTL(List<Statistic> statisticList) {
         Configuration cfg = new Configuration();
@@ -35,9 +42,9 @@ public class HTMLCreator {
 
 
         try {
-            String path = CurrentPath.getInstance().getPath();
+
             Template template = cfg.getTemplate("table.ftl");
-            Writer fileWriter = new FileWriter(new File(path + "statistic.html"), Charset.forName("UTF-8"));
+            Writer fileWriter = new FileWriter(new File(super.getFinalPath()+ "statistic.html"), Charset.forName("UTF-8"));
             template.process(root, fileWriter);
 
         } catch (IOException | TemplateException e) {
@@ -48,7 +55,6 @@ public class HTMLCreator {
     }
 
     public String readHtml() throws IOException {
-        String path = CurrentPath.getInstance().getPath();
-        return FileUtils.readFileToString(new File(path+"statistic.html"), Charset.forName("UTF-8"));
+        return FileUtils.readFileToString(new File(super.getFinalPath()+"statistic.html"), Charset.forName("UTF-8"));
     }
 }

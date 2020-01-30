@@ -2,6 +2,7 @@ package Base;
 
 import Services.CurrentPath;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -17,18 +18,13 @@ import java.util.*;
 @Data
 public class Config {
     private String date;
-    private String dataBase;
-    private String server;
-    private String port;
-    private String dataBaseUser = "";
-    private String dataBasePassword = "";
-    private String connectURL;
-    private List<ProjectConf> projectConfs = new ArrayList<>();
+
+    private List<ProjectConf> projectConfList = new ArrayList<>();
     private DocumentBuilderFactory dbf = null;
     private DocumentBuilder db = null;
     private Document doc = null;
     private Character delimiter;
-    private List<String> recipientsForAll = new ArrayList<>();
+    private List<String> supervisorRecipients = new ArrayList<>();
     private String mailServer;
     private String mailPort;
     private String mailUser;
@@ -67,27 +63,16 @@ public class Config {
             Node node = config.item(itr);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element eElement = (Element) node;
+                readProjectsConf(eElement);
                 date = eElement.getElementsByTagName("date").item(0).getTextContent();
-                server = eElement.getElementsByTagName("server").item(0).getTextContent();
-                dataBase = eElement.getElementsByTagName("dataBase").item(0).getTextContent();
-                dataBaseUser = eElement.getElementsByTagName("dataBaseUser").item(0).getTextContent();
-                dataBasePassword = eElement.getElementsByTagName("dataBasePassword").item(0).getTextContent();
-                port = eElement.getElementsByTagName("port").item(0).getTextContent();
-                if (port.toLowerCase().equals("default") || port.isBlank()) {
-                    port = ";";
-                } else {
-                    port = ":" + port + ";";
-                }
                 delimiter = eElement.getElementsByTagName("delimiter").item(0).getTextContent().charAt(0);
-                recipientsForAll = Arrays.asList(eElement.getElementsByTagName("recipients").item(0).getTextContent().split(";"));
-
+                supervisorRecipients = Arrays.asList(eElement.getElementsByTagName("supervisorRecipients").item(0).getTextContent().split(";"));
                 mailServer = eElement.getElementsByTagName("mailServer").item(0).getTextContent();
                 mailPort = eElement.getElementsByTagName("mailPort").item(0).getTextContent();
                 mailUser = eElement.getElementsByTagName("mailUser").item(0).getTextContent();
                 mailPassword = eElement.getElementsByTagName("mailPassword").item(0).getTextContent();
             }
         }
-        createConnectionURL();
     }
 
     private void readConfig() throws ParserConfigurationException, IOException, SAXException {
@@ -95,27 +80,41 @@ public class Config {
         dbf = DocumentBuilderFactory.newInstance();
         db = dbf.newDocumentBuilder();
         String configPath = CurrentPath.getInstance().getPath();
-        doc = db.parse(configPath+"/config.xml");
+        doc = db.parse(configPath + "/config.xml");
         doc.getDocumentElement().normalize();
     }
 
-    private void createConnectionURL() {
-        //  connectURL = "jdbc:sqlserver://" + server + "\\MSSQLSERVER;database=" + dataBase;
-        //connectURL = "jdbc:sqlserver://" + server+port+"database=" + dataBase;
-           // connectURL = "jdbc:sqlserver://" + server + "\\SPLAT;database=" + dataBase;
-           connectURL = "jdbc:sqlserver://" + server+port+"database=" + dataBase;
-
+    private void readProjectsConf(Element eElement) {
+        NodeList custom = eElement.getElementsByTagName("custom");
+        for (int itr = 0; itr < custom.getLength(); itr++) {
+            Node node = custom.item(itr);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element innerElement = (Element) node;
+                NodeList project = innerElement.getElementsByTagName("project");
+                for (int i = 0; i < project.getLength(); i++) {
+                    Node projectNode = project.item(i);
+                    if (projectNode.getNodeType() == Node.ELEMENT_NODE) {
+                        Element projectNodeElement = (Element) projectNode;
+                        String server = projectNodeElement.getElementsByTagName("server").item(0).getTextContent();
+                        String dataBase = projectNodeElement.getElementsByTagName("dataBase").item(0).getTextContent();
+                        String dataBaseUser = projectNodeElement.getElementsByTagName("dataBaseUser").item(0).getTextContent();
+                        String dataBasePassword = projectNodeElement.getElementsByTagName("dataBasePassword").item(0).getTextContent();
+                        ArrayList<String> recipients = new ArrayList<>(Arrays.
+                                asList(projectNodeElement.getElementsByTagName("recipients").item(0).getTextContent().split(";")));
+                        if (recipients.size() == 1 && recipients.get(0).equals("")) {
+                            recipients.remove(0);
+                        }
+                        String port = projectNodeElement.getElementsByTagName("port").item(0).getTextContent();
+                        if (port.toLowerCase().equals("default") || StringUtils.isBlank(port)) {
+                            port = ";";
+                        } else {
+                            port = ":" + port + ";";
+                        }
+                        ProjectConf projectConf = new ProjectConf(server, port, dataBase, dataBaseUser, dataBasePassword, recipients);
+                        projectConfList.add(projectConf);
+                    }
+                }
+            }
+        }
     }
-
-    public Map<String, Object> getMapMailConfig() {
-        HashMap<String, Object> objectObjectHashMap = new HashMap<>();
-        objectObjectHashMap.put("mailServer", mailServer);
-        objectObjectHashMap.put("mailPort", mailPort);
-        objectObjectHashMap.put("mailUser", mailUser);
-        objectObjectHashMap.put("mailPassword", mailPassword);
-        objectObjectHashMap.put("recipients", recipientsForAll.toString());
-        return objectObjectHashMap;
-    }
-
-
 }
