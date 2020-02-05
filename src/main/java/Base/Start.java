@@ -47,10 +47,8 @@ public class Start {
     }
 
     public static void main(String[] args) {
-        System.out.println(10);
         final Start start = new Start();
         start.startIt();
-
     }
     private void startIt(){
         config();
@@ -59,12 +57,15 @@ public class Start {
 
         try {
             if (!threadPool.awaitTermination(5, TimeUnit.SECONDS))
-                threadPool.shutdownNow();
-            System.out.println("пул выключен");
-            sendMail();
+                threadPool.shutdown();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        while (!threadPool.isTerminated()){
+
+        }
+        System.out.println("пул выключен");
+        sendMail();
     }
 
     private void sendMail() {

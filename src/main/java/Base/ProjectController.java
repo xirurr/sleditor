@@ -84,7 +84,7 @@ public class ProjectController implements Runnable {
                             "(select rde.UseReplicator4000 useReplicator4000, rde.id idDistr,st.ChangeDate ChangeDate, st.idRecord, st.useReplicator4000Log useReplicator4000Log from refDistributorsExt  rde\n" +
                             "left join st on st.idRecord = rde.id\n" +
                             ")\n" +
-                            "select rd.Emails, rd.NodeID, rd.id,  rd.Name NameOfDistributors, firstSync FirstSession, lastSync LastSession, fs.ChangeDate dateOfChange, fs.useReplicator4000, fs.useReplicator4000Log from #statistc st\n" +
+                            "select rd.NodeID, rd.id,  rd.Name NameOfDistributors, firstSync FirstSession, lastSync LastSession, fs.ChangeDate dateOfChange, fs.useReplicator4000, fs.useReplicator4000Log from #statistc st\n" +
                             "join refDistributors rd on rd.NodeID = st.TenantId\n" +
                             "join finalStat fs on fs.idDistr = rd.id \n" +
                             "drop table #cd1,#statistc";

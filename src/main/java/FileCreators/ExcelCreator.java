@@ -44,7 +44,7 @@ public class ExcelCreator extends AbstractCreator {
             workbook.write(file);
             workbook.close();
         } catch (Exception ex) {
-            System.out.println(ex);
+            ex.printStackTrace();
         }
 
     }
