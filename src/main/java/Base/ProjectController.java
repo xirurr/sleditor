@@ -51,7 +51,6 @@ public class ProjectController implements Runnable {
         } else {
             sqlConnectionPool = new SqlConnectionPool(project.getConnectURL(), project.getDataBaseUser(), project.getDataBasePassword());
         }
-
     }
 
     private void getR4000Data() {
@@ -61,7 +60,6 @@ public class ProjectController implements Runnable {
             final Statement statement = connection.createStatement();
             final String date = Config.getInstance().getDate();
             String SQL =
-                    "\n" +
                             "select MAX(ChangeDate) ChangeDate, idRecord\n" +
                             "into #cd1\n" +
                             "from v_LogDataChange \n" +
@@ -141,15 +139,14 @@ public class ProjectController implements Runnable {
             final Statement statement = connection.createStatement();
             final String date = Config.getInstance().getDate();
             String SQL =
-                    "with stat as(\n" +
-                            "select DistributorId, MIN(SessionCreateDate) firstSync, MAX(SessionCreateDate) lastSync\n" +
-                            "from cicerone.Sessions\n" +
-                            "where SessionCreateDate >=\'" + date + "\' \n" +
-                            "group by DistributorId)\n" +
-                            "select st.DistributorId statistcDistr, cd.id enabledDistr, rd.name enabledName, rd.NodeID enabledNodeID, rd2.name statisticName, rd2.NodeID statisticNodeID, firstSync,lastSync,Protocol from cicerone.Distributors cd\n" +
-                            "full outer join stat st on st.DistributorId = cd.id\n" +
-                            "left join refDistributors rd on cd.id = rd.id\n" +
-                            "left join refDistributors rd2 on st.DistributorId = rd2.id";
+                    "select st.DistributorId statistcDistr, cd.id enabledDistr, rd.name enabledName, rd.NodeID enabledNodeID, rd2.name statisticName, rd2.NodeID statisticNodeID, firstSync,lastSync,Protocol from cicerone.Distributors cd \n" +
+                            "full outer join ( \n" +
+                            "select DistributorId, MIN(SessionCreateDate) firstSync, MAX(SessionCreateDate) lastSync \n" +
+                            "from cicerone.Sessions \n" +
+                            "where SessionCreateDate >='20190101'\n" +
+                            "group by DistributorId)  st on st.DistributorId = cd.id \n" +
+                            "left join refDistributors rd on cd.id = rd.id \n" +
+                            "left join refDistributors rd2 on st.DistributorId = rd2.id;";
             final ResultSet resultSet = statement.executeQuery(SQL);
             List<Statistic> tmpListCicerone = new ArrayList<>();
 
@@ -167,7 +164,7 @@ public class ProjectController implements Runnable {
 
                 String tmpStatus;
 
-                if (protocolStatus == null || protocolStatus.isBlank() || protocolStatus.isEmpty()) {
+                if (StringUtils.isBlank(protocolStatus)) {
                     tmpStatus = "Disabled";
                 } else tmpStatus = "Enabled";
                 Date firstSyncD = null;
