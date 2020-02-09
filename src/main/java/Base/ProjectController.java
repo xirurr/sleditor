@@ -143,7 +143,7 @@ public class ProjectController implements Runnable {
                             "full outer join ( \n" +
                             "select DistributorId, MIN(SessionCreateDate) firstSync, MAX(SessionCreateDate) lastSync \n" +
                             "from cicerone.Sessions \n" +
-                            "where SessionCreateDate >='20190101'\n" +
+                            "where SessionCreateDate >=\'" + date + "\' \n" +
                             "group by DistributorId)  st on st.DistributorId = cd.id \n" +
                             "left join refDistributors rd on cd.id = rd.id \n" +
                             "left join refDistributors rd2 on st.DistributorId = rd2.id;";
