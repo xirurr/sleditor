@@ -57,10 +57,12 @@ public class ProjectController implements Runnable {
         System.out.println("получение данных по R4000");
         connection = sqlConnectionPool.getConnection();
         try {
+
+
             final Statement statement = connection.createStatement();
             final String date = Config.getInstance().getDate();
             String SQL =
-                            "select MAX(ChangeDate) ChangeDate, idRecord\n" +
+                    "select MAX(ChangeDate) ChangeDate, idRecord\n" +
                             "into #cd1\n" +
                             "from v_LogDataChange \n" +
                             "where tableName = 'refDistributorsExt' \n" +
@@ -76,8 +78,9 @@ public class ProjectController implements Runnable {
 
 
                             "with st as(\n" +
-                            "select ChangeDate, idRecord, NewValue useReplicator4000Log from v_LogDataChange where (ChangeDate in (select ChangeDate from #cd1) and idRecord in (select idRecord from #cd1))\n" +
-                            "),\n" +
+                            "select ChangeDate, idRecord, NewValue useReplicator4000Log from v_LogDataChange where (ChangeDate in (select ChangeDate from #cd1) " +
+                            "and idRecord in (select idRecord from #cd1))\n " +
+                            "and FieldName = 'usereplicator4000'),\n" +
                             "finalStat as \n" +
                             "(select rde.UseReplicator4000 useReplicator4000, rde.id idDistr,st.ChangeDate ChangeDate, st.idRecord, st.useReplicator4000Log useReplicator4000Log from refDistributorsExt  rde\n" +
                             "left join st on st.idRecord = rde.id\n" +
@@ -191,7 +194,6 @@ public class ProjectController implements Runnable {
             if (e.getMessage().contains("Invalid object name 'cicerone.Sessions'")) {
                 System.out.println("Данные по протоколу Cicerone отсутствуют");
             } else
-
                 e.printStackTrace();
         } finally {
             sqlConnectionPool.returnConnection(connection);
